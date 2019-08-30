@@ -20,8 +20,23 @@
 <!-- End Jekyll SEO tag -->
 <link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Your awesome title" /></head>
 <body>
+  <ul class="posts-hidden">
+  {% for post in site.posts %}
+    <li>
+      <div class="post-info">
+        <div class="post-url">{{ post.url }}</div>
+        <div class="post-title">{{ post.title }}</div>
+        <ul class="post-categories">
+          {% for category in post.categories %}
+            <li class="category">{{category}}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </li>
+  {% endfor %}
+</ul>
   <script type="text/javascript" charset="utf-8">
-      var w = 960, h = 500;
+      var w = window.innerWidth, h = window.innerHeight;
 
       var labelDistance = 0;
 
@@ -32,9 +47,14 @@
       var labelAnchorLinks = [];
       var links = [];
 
-      for(var i = 0; i < 30; i++) {
+      var myPosts = [].slice.call(document.querySelectorAll('.post-info'));
+
+      for (let i = 0; i < myPosts.length; i++) {
+        console.log(myPosts[i].querySelector('.post-title').innerText);
         var node = {
-          label : "node " + i
+          label : myPosts[i].querySelector('.post-title').innerText,
+          url: myPosts[i].querySelector('.post-url').innerText,
+          categories: [].slice.call(myPosts[i].querySelectorAll('.category'))
         };
         nodes.push(node);
         labelAnchors.push({
@@ -43,7 +63,7 @@
         labelAnchors.push({
           node : node
         });
-      };
+      }
 
       for(var i = 0; i < nodes.length; i++) {
         for(var j = 0; j < i; j++) {
@@ -78,13 +98,30 @@
       node.call(force.drag);
 
 
-      var anchorLink = vis.selectAll("line.anchorLink").data(labelAnchorLinks)//.enter().append("svg:line").attr("class", "anchorLink").style("stroke", "#999");
+      var anchorLink = vis.selectAll("line.anchorLink").data(labelAnchorLinks).enter().append("svg:line").attr("class", "anchorLink").style("stroke", "#999");
 
+      // This is our anchor node!
+      // It is black!
       var anchorNode = vis.selectAll("g.anchorNode").data(force2.nodes()).enter().append("svg:g").attr("class", "anchorNode");
-      anchorNode.append("svg:circle").attr("r", 0).style("fill", "#FFF");
-        anchorNode.append("svg:text").text(function(d, i) {
+      // This is a 0 by 0 sized circle around our node.. i'm not sure why it is there??
+      anchorNode.append("svg:ellipse").attr("rx", 0).attr("ry", 0).style("fill", "#F00");
+
+      // This is the link! it's an invisible rectangle
+      // around our node!
+      anchorNode.append("a")
+        .attr("xlink:href", function(d, i) {
+          console.log(d.node.categories);
+          return i % 2 == 0 ? "" : d.node.url
+        })
+        .append("rect")  
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("height", 100)
+        .attr("width", 200)
+        .style("fill", "rgba(255, 255, 255, 100)");
+      anchorNode.append("svg:text").text(function(d, i) {
         return i % 2 == 0 ? "" : d.node.label
-      }).style("fill", "#555").style("font-family", "Arial").style("font-size", 12);
+      }).style("fill", "#555").style("font-family", "Arial").style("font-size", 24);
 
       var updateLink = function() {
         this.attr("x1", function(d) {
