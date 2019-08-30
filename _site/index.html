@@ -14,61 +14,133 @@
 <meta property="og:site_name" content="Your awesome title" />
 <script type="application/ld+json">
 {"name":"Your awesome title","description":"Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.","@type":"WebSite","url":"http://localhost:4000/","headline":"Your awesome title","@context":"https://schema.org"}</script>
+<script type="text/javascript" src="https://mbostock.github.com/d3/d3.js?2.6.0"></script>
+<script type="text/javascript" src="https://mbostock.github.com/d3/d3.layout.js?2.6.0"></script>
+<script type="text/javascript" src="https://mbostock.github.com/d3/d3.geom.js?2.6.0"></script>
 <!-- End Jekyll SEO tag -->
 <link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Your awesome title" /></head>
-<body><header class="site-header" role="banner">
+<body>
+  <script type="text/javascript" charset="utf-8">
+      var w = 960, h = 500;
 
-  <div class="wrapper"><a class="site-title" rel="author" href="/">Your awesome title</a><nav class="site-nav">
-        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
-        <label for="nav-trigger">
-          <span class="menu-icon">
-            <svg viewBox="0 0 18 15" width="18px" height="15px">
-              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
-            </svg>
-          </span>
-        </label>
+      var labelDistance = 0;
 
-        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
-      </nav></div>
-</header>
-<main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <div class="home">
-<h2 class="post-list-heading">Posts</h2>
-    <ul class="post-list"><li><span class="post-meta">Aug 30, 2019</span>
-        <h3>
-          <a class="post-link" href="/jekyll/update/2019/08/30/welcome-to-jekyll.html">
-            Welcome to Jekyll!!!!!
-          </a>
-        </h3></li></ul>
+      var vis = d3.select("body").append("svg:svg").attr("width", w).attr("height", h);
 
-    <p class="rss-subscribe">subscribe <a href="/feed.xml">via RSS</a></p></div>
+      var nodes = [];
+      var labelAnchors = [];
+      var labelAnchorLinks = [];
+      var links = [];
 
-      </div>
-    </main><footer class="site-footer h-card">
-  <data class="u-url" href="/"></data>
+      for(var i = 0; i < 30; i++) {
+        var node = {
+          label : "node " + i
+        };
+        nodes.push(node);
+        labelAnchors.push({
+          node : node
+        });
+        labelAnchors.push({
+          node : node
+        });
+      };
 
-  <div class="wrapper">
+      for(var i = 0; i < nodes.length; i++) {
+        for(var j = 0; j < i; j++) {
+          if(Math.random() > .95)
+            links.push({
+              source : i,
+              target : j,
+              weight : Math.random()
+            });
+        }
+        labelAnchorLinks.push({
+          source : i * 2,
+          target : i * 2 + 1,
+          weight : 1
+        });
+      };
 
-    <h2 class="footer-heading">Your awesome title</h2>
+      var force = d3.layout.force().size([w, h]).nodes(nodes).links(links).gravity(1).linkDistance(50).charge(-3000).linkStrength(function(x) {
+        return x.weight * 10
+      });
 
-    <div class="footer-col-wrapper">
-      <div class="footer-col footer-col-1">
-        <ul class="contact-list">
-          <li class="p-name">Your awesome title</li><li><a class="u-email" href="mailto:your-email@example.com">your-email@example.com</a></li></ul>
-      </div>
 
-      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/jekyll"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">jekyll</span></a></li><li><a href="https://www.twitter.com/jekyllrb"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">jekyllrb</span></a></li></ul>
-</div>
+      force.start();
 
-      <div class="footer-col footer-col-3">
-        <p>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</p>
-      </div>
-    </div>
+      var force2 = d3.layout.force().nodes(labelAnchors).links(labelAnchorLinks).gravity(0).linkDistance(0).linkStrength(8).charge(-100).size([w, h]);
+      force2.start();
 
-  </div>
+      var link = vis.selectAll("line.link").data(links).enter().append("svg:line").attr("class", "link").style("stroke", "#CCC");
 
-</footer>
+      var node = vis.selectAll("g.node").data(force.nodes()).enter().append("svg:g").attr("class", "node");
+      node.append("svg:circle").attr("r", 5).style("fill", "#555").style("stroke", "#FFF").style("stroke-width", 3);
+      node.call(force.drag);
+
+
+      var anchorLink = vis.selectAll("line.anchorLink").data(labelAnchorLinks)//.enter().append("svg:line").attr("class", "anchorLink").style("stroke", "#999");
+
+      var anchorNode = vis.selectAll("g.anchorNode").data(force2.nodes()).enter().append("svg:g").attr("class", "anchorNode");
+      anchorNode.append("svg:circle").attr("r", 0).style("fill", "#FFF");
+        anchorNode.append("svg:text").text(function(d, i) {
+        return i % 2 == 0 ? "" : d.node.label
+      }).style("fill", "#555").style("font-family", "Arial").style("font-size", 12);
+
+      var updateLink = function() {
+        this.attr("x1", function(d) {
+          return d.source.x;
+        }).attr("y1", function(d) {
+          return d.source.y;
+        }).attr("x2", function(d) {
+          return d.target.x;
+        }).attr("y2", function(d) {
+          return d.target.y;
+        });
+
+      }
+
+      var updateNode = function() {
+        this.attr("transform", function(d) {
+          return "translate(" + d.x + "," + d.y + ")";
+        });
+
+      }
+
+
+      force.on("tick", function() {
+
+        force2.start();
+
+        node.call(updateNode);
+
+        anchorNode.each(function(d, i) {
+          if(i % 2 == 0) {
+            d.x = d.node.x;
+            d.y = d.node.y;
+          } else {
+            var b = this.childNodes[1].getBBox();
+
+            var diffX = d.x - d.node.x;
+            var diffY = d.y - d.node.y;
+
+            var dist = Math.sqrt(diffX * diffX + diffY * diffY);
+
+            var shiftX = b.width * (diffX - dist) / (dist * 2);
+            shiftX = Math.max(-b.width, Math.min(0, shiftX));
+            var shiftY = 5;
+            this.childNodes[1].setAttribute("transform", "translate(" + shiftX + "," + shiftY + ")");
+          }
+        });
+
+
+        anchorNode.call(updateNode);
+
+        link.call(updateLink);
+        anchorLink.call(updateLink);
+
+      });
+
+    </script>
 </body>
 
 </html>
